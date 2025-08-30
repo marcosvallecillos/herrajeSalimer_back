@@ -17,22 +17,31 @@ use Symfony\Component\HttpFoundation\Response;
 final class MuebleController extends AbstractController
 {
     #[Route(name: 'app_mueble_index', methods: ['GET'])]
-    public function index(MuebleRepository $muebleRepository): JsonResponse
-    {
-        $muebles = $muebleRepository->findAll();
-        $data = [];
-        foreach ($muebles as $mueble) {
-            $data[] = [
-                'id' => $mueble->getId(),
-                'nombre' => $mueble->getNombre(),
-                'Imagen' => $mueble->getImage(),
-                'NumeroPiezas' => $mueble->getNumPieces(),
-                'Herrajes' => $mueble->getHerrajes(),
+   public function index(MuebleRepository $muebleRepository): JsonResponse
+{
+    $muebles = $muebleRepository->findAll();
+    $data = [];
+    foreach ($muebles as $mueble) {
+        $herrajesData = [];
+        foreach ($mueble->getHerrajes() as $herraje) {
+            $herrajesData[] = [
+                'id' => $herraje->getId(),
+                'tipo' => $herraje->getTipo(),
+                'cantidad' => $herraje->getCantidad(),
             ];
         }
-        
-        return new JsonResponse($data);
+
+        $data[] = [
+            'id' => $mueble->getId(),
+            'nombre' => $mueble->getNombre(),
+            'imagen' => $mueble->getImage(),
+            'numero_piezas' => $mueble->getNumPieces(),
+            'herrajes' => $herrajesData,  // Aquí agregamos los herrajes serializados
+        ];
     }
+    
+    return new JsonResponse($data);
+}
     
 
 
