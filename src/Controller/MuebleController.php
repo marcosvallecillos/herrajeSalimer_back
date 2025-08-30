@@ -7,6 +7,11 @@ use App\Repository\MuebleRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\Request;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\HttpFoundation\Response;
+
+
 
 #[Route('/api/mueble', name: 'app_mueble')]
 final class MuebleController extends AbstractController
@@ -32,24 +37,34 @@ final class MuebleController extends AbstractController
 
 
     
-    #[Route('/new', name: 'app_mueble_new', methods: ['GET','POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $data = json_decode($request->getContent(), true);
-    
-        if ($data === null) {
-            return new JsonResponse(['status' => 'JSON inválido'], 400);
-        }
-    
-        $mueble = new Mueble();
-        $mueble->setNombre($data['nombre'] ?? null);
-        $mueble->setImage($data['imagen'] ?? null);
-        $mueble->setNumPieces($data['numero_piezas'] ?? null);
-        $entityManager->persist($mueble);
-        $entityManager->flush();
-    
-        return new JsonResponse(['status' => 'mueble creado'], 201);
+   #[Route('/new', name: 'app_mueble_new', methods: ['GET', 'POST'])]
+public function new(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $data = json_decode($request->getContent(), true);
+
+    // Verificar si el JSON está bien formado
+    if ($data === null) {
+        return new JsonResponse(['status' => 'JSON inválido', 'error' => json_last_error_msg()], 400);
     }
+
+    // Verificar que los campos requeridos estén presentes
+    if (!isset($data['nombre'], $data['imagen'], $data['numero_piezas'])) {
+        return new JsonResponse(['status' => 'Faltan campos requeridos', 'error' => 'nombre, imagen, numero_piezas'], 400);
+    }
+
+    // Crear un nuevo objeto Mueble
+    $mueble = new Mueble();
+    $mueble->setNombre($data['nombre']);
+    $mueble->setImage($data['imagen']);
+    $mueble->setNumPieces($data['numero_piezas']);
+
+    // Persistir el mueble
+    $entityManager->persist($mueble);
+    $entityManager->flush();
+
+    return new JsonResponse(['status' => 'Mueble creado', 'id' => $mueble->getId()], 201);
+}
+
 
       #[Route('/{id}', name: 'app_mueble_show', methods: ['GET'])]
     public function show(Mueble $mueble): JsonResponse
