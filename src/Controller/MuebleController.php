@@ -57,6 +57,7 @@ public function new(Request $request, EntityManagerInterface $entityManager): Re
     $mueble->setNombre($data['nombre']);
     $mueble->setImage($data['imagen']);
     $mueble->setNumPieces($data['numero_piezas']);
+    $mueble->setHerrajes($data['herrajes'] ?? null); // Herrajes es opcional
 
     // Persistir el mueble
     $entityManager->persist($mueble);
@@ -111,12 +112,12 @@ public function new(Request $request, EntityManagerInterface $entityManager): Re
             return new JsonResponse(['status' => 'Mueble actualizado']);
         }
 
-    #[Route('/delete/{id}', name: 'app_usuarios_delete', methods: ['DELETE'])]
-    public function delete(Usuarios $usuario, EntityManagerInterface $entityManager): JsonResponse
+   #[Route('/delete/{id}', name: 'app_mueble_delete', methods: ['DELETE'])]
+    public function delete(Mueble $mueble, EntityManagerInterface $entityManager): JsonResponse
     {
-        $entityManager->remove($usuario);
+        $entityManager->remove($mueble);
         $entityManager->flush();
 
-        return new JsonResponse(['message' => 'Usuario eliminado con éxito'], 200);
+        return new JsonResponse(['message' => 'Mueble eliminado con éxito'], 200);
     }
 }

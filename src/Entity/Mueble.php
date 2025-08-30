@@ -85,7 +85,12 @@ class Mueble
     {
         return $this->herrajes;
     }
+    public function setHerrajes(Collection $herrajes): static
+    {
+        $this->herrajes = $herrajes;
 
+        return $this;
+    }
     public function addHerraje(Herrajes $herraje): static
     {
         if (!$this->herrajes->contains($herraje)) {
