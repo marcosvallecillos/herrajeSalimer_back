@@ -33,6 +33,31 @@ final class MuebleController extends AbstractController
         
         return new JsonResponse($data);
     }
+
+    #[Route('/search', name: 'app_mueble_search', methods: ['GET'])]
+    public function search(Request $request, MuebleRepository $muebleRepository): JsonResponse
+    {
+        $nombre = $request->query->get('nombre');
+        
+        if (!$nombre) {
+            return new JsonResponse(['error' => 'El parámetro "nombre" es requerido'], 400);
+        }
+        
+        $muebles = $muebleRepository->findByNombre($nombre);
+        $data = [];
+        
+        foreach ($muebles as $mueble) {
+            $data[] = [
+                'id' => $mueble->getId(),
+                'nombre' => $mueble->getNombre(),
+                'imagen' => $mueble->getImage(),
+                'numero_piezas' => $mueble->getNumPieces(),
+                'herrajes' => $mueble->getHerrajes(),
+            ];
+        }
+        
+        return new JsonResponse($data);
+    }
     
 
 

@@ -16,6 +16,21 @@ class MuebleRepository extends ServiceEntityRepository
         parent::__construct($registry, Mueble::class);
     }
 
+    /**
+     * Buscar muebles por nombre (búsqueda parcial)
+     * @param string $nombre
+     * @return Mueble[]
+     */
+    public function findByNombre(string $nombre): array
+    {
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.nombre LIKE :nombre')
+            ->setParameter('nombre', '%' . $nombre . '%')
+            ->orderBy('m.nombre', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     //    /**
     //     * @return Mueble[] Returns an array of Mueble objects
     //     */
