@@ -39,6 +39,8 @@ final class MuebleController extends AbstractController
             'herrajes' => $herrajesData,  // Aquí agregamos los herrajes serializados
         ];
     }
+      return new JsonResponse($data);
+}
 
     #[Route('/search', name: 'app_mueble_search', methods: ['GET'])]
     public function search(Request $request, MuebleRepository $muebleRepository): JsonResponse
@@ -65,8 +67,7 @@ final class MuebleController extends AbstractController
         return new JsonResponse($data);
     }
     
-    return new JsonResponse($data);
-}
+  
     
 
 
