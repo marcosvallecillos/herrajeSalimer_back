@@ -55,12 +55,21 @@ final class MuebleController extends AbstractController
         $data = [];
         
         foreach ($muebles as $mueble) {
+             $herrajesData = [];
+        foreach ($mueble->getHerrajes() as $herraje) {
+            $herrajesData[] = [
+                'id' => $herraje->getId(),
+                'tipo' => $herraje->getTipo(),
+                'cantidad' => $herraje->getCantidad(),
+            ];
+        }
+
             $data[] = [
                 'id' => $mueble->getId(),
                 'nombre' => $mueble->getNombre(),
                 'imagen' => $mueble->getImage(),
                 'numero_piezas' => $mueble->getNumPieces(),
-                'herrajes' => $mueble->getHerrajes(),
+                'herrajes' => $herrajesData,
             ];
         }
         
