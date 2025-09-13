@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+use App\Entity\Herrajes;
 
 use App\Entity\Mueble;
 use App\Repository\MuebleRepository;
@@ -70,6 +71,7 @@ final class MuebleController extends AbstractController
                 'imagen' => $mueble->getImage(),
                 'numero_piezas' => $mueble->getNumPieces(),
                 'herrajes' => $herrajesData,
+                'herrajes' => $herrajesData,
             ];
         }
         
@@ -81,34 +83,51 @@ final class MuebleController extends AbstractController
 
 
     
-   #[Route('/new', name: 'app_mueble_new', methods: ['GET', 'POST'])]
-public function new(Request $request, EntityManagerInterface $entityManager): Response
+  public function new(Request $request, EntityManagerInterface $entityManager): Response
 {
     $data = json_decode($request->getContent(), true);
 
-    // Verificar si el JSON está bien formado
     if ($data === null) {
         return new JsonResponse(['status' => 'JSON inválido', 'error' => json_last_error_msg()], 400);
     }
 
-    // Verificar que los campos requeridos estén presentes
     if (!isset($data['nombre'], $data['imagen'], $data['numero_piezas'])) {
         return new JsonResponse(['status' => 'Faltan campos requeridos', 'error' => 'nombre, imagen, numero_piezas'], 400);
     }
 
-    // Crear un nuevo objeto Mueble
     $mueble = new Mueble();
     $mueble->setNombre($data['nombre']);
     $mueble->setImage($data['imagen']);
     $mueble->setNumPieces($data['numero_piezas']);
-    $mueble->setHerrajes($data['herrajes'] ?? null); // Herrajes es opcional
 
-    // Persistir el mueble
-    $entityManager->persist($mueble);
-    $entityManager->flush();
+    // Crear herrajes si vienen
+    if (!empty($data['herrajes']) && is_array($data['herrajes'])) {
+        foreach ($data['herrajes'] as $herrajes) {
+            if (!isset($herrajes['tipo'], $herrajes['cantidad'])) {
+                continue; // Ignorar herrajes inválidos
+            }
+            $herraje = new Herrajes();
+            $herraje->setTipo($herrajes['tipo']);
+            $herraje->setCantidad($herrajes['cantidad']);
+            $herraje->setMuebleId($mueble); // Relación inversa
+            $entityManager->persist($herraje);
+            $mueble->addHerraje($herraje);
+        }
+    }
+
+    try {
+        $entityManager->persist($mueble);
+        $entityManager->flush();
+    } catch (\Exception $e) {
+        return new JsonResponse([
+            'status' => 'Error al guardar',
+            'message' => $e->getMessage()
+        ], 500);
+    }
 
     return new JsonResponse(['status' => 'Mueble creado', 'id' => $mueble->getId()], 201);
 }
+
 
 
       #[Route('/{id}', name: 'app_mueble_show', methods: ['GET'])]
