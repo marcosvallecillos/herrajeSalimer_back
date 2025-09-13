@@ -173,12 +173,18 @@ final class MuebleController extends AbstractController
             return new JsonResponse(['status' => 'Mueble actualizado']);
         }
 
-   #[Route('/delete/{id}', name: 'app_mueble_delete', methods: ['DELETE'])]
-    public function delete(Mueble $mueble, EntityManagerInterface $entityManager): JsonResponse
-    {
-        $entityManager->remove($mueble);
-        $entityManager->flush();
-
-        return new JsonResponse(['message' => 'Mueble eliminado con éxito'], 200);
+  #[Route('/delete/{id}', name: 'app_mueble_delete', methods: ['DELETE'])]
+public function delete(Mueble $mueble, EntityManagerInterface $entityManager): JsonResponse
+{
+    // Eliminar herrajes asociados
+    foreach ($mueble->getHerrajes() as $herraje) {
+        $entityManager->remove($herraje);
     }
+
+    $entityManager->remove($mueble);
+    $entityManager->flush();
+
+    return new JsonResponse(['message' => 'Mueble eliminado con éxito'], 200);
+}
+
 }
