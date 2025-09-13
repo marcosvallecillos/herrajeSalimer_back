@@ -82,7 +82,8 @@ final class MuebleController extends AbstractController
     
 
 
-    
+        #[Route('/new', name: 'app_mueble_search', methods: ['GET', 'POST'])]
+
   public function new(Request $request, EntityManagerInterface $entityManager): Response
 {
     $data = json_decode($request->getContent(), true);
