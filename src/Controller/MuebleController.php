@@ -71,7 +71,6 @@ final class MuebleController extends AbstractController
                 'imagen' => $mueble->getImage(),
                 'numero_piezas' => $mueble->getNumPieces(),
                 'herrajes' => $herrajesData,
-                'herrajes' => $herrajesData,
             ];
         }
         
@@ -161,15 +160,82 @@ final class MuebleController extends AbstractController
                 return new JsonResponse($data);
             }
             
-            // For PUT requests, update the user
-            $data = json_decode($request->getContent(), true); // Se recibe la información en JSON.
+            // For PUT requests, update the entity
+            $data = json_decode($request->getContent(), true);
 
-            // Actualizamos los campos del mueble con los datos recibidos
-            $mueble->setNombre($data['nombre'] ?? $mueble->getNombre());
-            $mueble->setImage($data['imagen'] ?? $mueble->getImage());
-            $mueble->setNumPieces($data['numero_piezas'] ?? $mueble->getNumPieces());
-            $mueble->setHerrajes($data['herrajes'] ?? $mueble->getHerrajes());
+            if ($data === null) {
+                return new JsonResponse(['status' => 'JSON inválido', 'error' => json_last_error_msg()], 400);
+            }
 
+            // Actualizamos campos simples
+            if (array_key_exists('nombre', $data)) {
+                $mueble->setNombre($data['nombre']);
+            }
+            if (array_key_exists('imagen', $data)) {
+                $mueble->setImage($data['imagen']);
+            }
+            if (array_key_exists('numero_piezas', $data)) {
+                $mueble->setNumPieces((int) $data['numero_piezas']);
+            }
+
+            // Sincronizar herrajes si vienen en el payload
+            if (array_key_exists('herrajes', $data) && is_array($data['herrajes'])) {
+                $existingHerrajes = $mueble->getHerrajes();
+
+                $existingById = [];
+                foreach ($existingHerrajes as $existing) {
+                    if (null !== $existing->getId()) {
+                        $existingById[$existing->getId()] = $existing;
+                    }
+                }
+
+                $payloadIdsToKeep = [];
+
+                foreach ($data['herrajes'] as $hData) {
+                    // Validar estructura mínima
+                    if (!is_array($hData)) {
+                        continue;
+                    }
+
+                    $id = $hData['id'] ?? null;
+                    $tipo = $hData['tipo'] ?? null;
+                    $cantidad = $hData['cantidad'] ?? null;
+
+                    if ($id !== null && isset($existingById[$id])) {
+                        // Actualizar existente
+                        $herraje = $existingById[$id];
+                        if ($tipo !== null) {
+                            $herraje->setTipo($tipo);
+                        }
+                        if ($cantidad !== null) {
+                            $herraje->setCantidad((int) $cantidad);
+                        }
+                        $payloadIdsToKeep[] = $id;
+                    } else {
+                        // Crear nuevo
+                        if ($tipo === null || $cantidad === null) {
+                            // si faltan datos básicos, ignorar
+                            continue;
+                        }
+                        $nuevo = new Herrajes();
+                        $nuevo->setTipo($tipo);
+                        $nuevo->setCantidad((int) $cantidad);
+                        $nuevo->setMuebleId($mueble);
+                        $entityManager->persist($nuevo);
+                        $mueble->addHerraje($nuevo);
+                        // no tiene id aún hasta flush
+                    }
+                }
+
+                // Eliminar los herrajes que ya no vienen en el payload
+                foreach ($existingHerrajes as $existing) {
+                    $existingId = $existing->getId();
+                    if ($existingId !== null && !in_array($existingId, $payloadIdsToKeep, true)) {
+                        $mueble->removeHerraje($existing);
+                        $entityManager->remove($existing);
+                    }
+                }
+            }
 
             $entityManager->flush();
 
