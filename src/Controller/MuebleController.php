@@ -46,42 +46,45 @@ final class MuebleController extends AbstractController
     #[Route('/search', name: 'app_mueble_search', methods: ['GET'])]
     public function search(Request $request, MuebleRepository $muebleRepository): JsonResponse
     {
-        $nombre = $request->query->get('nombre');
-        
-        if (!$nombre) {
-            return new JsonResponse(['error' => 'El parámetro "nombre" es requerido'], 400);
-        }
-        
-        $muebles = $muebleRepository->findByNombre($nombre);
-        $data = [];
-        
-        foreach ($muebles as $mueble) {
-             $herrajesData = [];
-        foreach ($mueble->getHerrajes() as $herraje) {
-            $herrajesData[] = [
-                'id' => $herraje->getId(),
-                'tipo' => $herraje->getTipo(),
-                'cantidad' => $herraje->getCantidad(),
-            ];
-        }
+        try {
+            $nombre = trim((string) $request->query->get('nombre', ''));
+            if ($nombre === '') {
+                return new JsonResponse(['error' => 'El parámetro "nombre" es requerido'], 400);
+            }
 
-            $data[] = [
-                'id' => $mueble->getId(),
-                'nombre' => $mueble->getNombre(),
-                'imagen' => $mueble->getImage(),
-                'numero_piezas' => $mueble->getNumPieces(),
-                'herrajes' => $herrajesData,
-            ];
+            $muebles = $muebleRepository->findByNombre($nombre);
+            $data = [];
+
+            foreach ($muebles as $mueble) {
+                $herrajesData = [];
+                foreach ($mueble->getHerrajes() as $herraje) {
+                    $herrajesData[] = [
+                        'id' => $herraje->getId(),
+                        'tipo' => $herraje->getTipo(),
+                        'cantidad' => $herraje->getCantidad(),
+                    ];
+                }
+
+                $data[] = [
+                    'id' => $mueble->getId(),
+                    'nombre' => $mueble->getNombre(),
+                    'imagen' => $mueble->getImage(),
+                    'numero_piezas' => $mueble->getNumPieces(),
+                    'herrajes' => $herrajesData,
+                ];
+            }
+
+            return new JsonResponse($data, 200);
+        } catch (\Throwable $e) {
+            return new JsonResponse(['error' => 'Error en búsqueda', 'message' => $e->getMessage()], 500);
         }
-        
-        return new JsonResponse($data);
     }
     
   
     
 
 
-        #[Route('/new', name: 'app_mueble_search', methods: ['GET', 'POST'])]
+        #[Route('/new', name: 'app_mueble_new', methods: ['GET', 'POST'])]
 
   public function new(Request $request, EntityManagerInterface $entityManager): Response
 {
