@@ -239,7 +239,25 @@ final class MuebleController extends AbstractController
 
             $entityManager->flush();
 
-            return new JsonResponse(['status' => 'Mueble actualizado']);
+            // Responder con el mueble actualizado serializado
+            $herrajesData = [];
+            foreach ($mueble->getHerrajes() as $herraje) {
+                $herrajesData[] = [
+                    'id' => $herraje->getId(),
+                    'tipo' => $herraje->getTipo(),
+                    'cantidad' => $herraje->getCantidad(),
+                ];
+            }
+
+            $dataResponse = [
+                'id' => $mueble->getId(),
+                'nombre' => $mueble->getNombre(),
+                'imagen' => $mueble->getImage(),
+                'numero_piezas' => $mueble->getNumPieces(),
+                'herrajes' => $herrajesData,
+            ];
+
+            return new JsonResponse($dataResponse, 200);
         }
 
   #[Route('/delete/{id}', name: 'app_mueble_delete', methods: ['DELETE'])]
